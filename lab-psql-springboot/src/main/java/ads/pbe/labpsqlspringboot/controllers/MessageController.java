@@ -1,8 +1,12 @@
 package ads.pbe.labpsqlspringboot.controllers;
 
+import ads.pbe.labpsqlspringboot.models.Message;
 import ads.pbe.labpsqlspringboot.services.MessageService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import ads.pbe.labpsqlspringboot.utils.MessageInput;
+import ads.pbe.labpsqlspringboot.utils.Result;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class MessageController {
@@ -11,14 +15,23 @@ public class MessageController {
         this.messageService = messageService;
     }
 
-    @GetMapping(path = "/getAll", produces="application/json")
-    public String listAllMessages() {
-        return messageService.getAllUsers();
+    @GetMapping(path = "/getInboxMessage/{inbox}", produces="application/json")
+    public ResponseEntity<Result> getInboxMessage(@PathVariable("inbox") String inbox) {
+        Message message = messageService.pollMessage(inbox);
+        if (message == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Result("inbox '" + inbox + "' is empty"));
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new Result(message.getCreation_date() + ": " + message.getMessage()));
     }
 
-    @GetMapping(path = "/insert", produces="application/json")
-    public String inserta() {
-        messageService.newMessage("1","um");
-        return "ok";
+    @PostMapping(path = "/newMessage/{inbox}", produces="application/json")
+    public ResponseEntity<Result> newMessage(@PathVariable("inbox") String inbox, @RequestBody MessageInput messageInput) {
+        if (messageInput.message() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Result("'message' is required"));
+        }
+
+        messageService.newMessage(inbox, messageInput.message());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new Result("Created"));
     }
 }

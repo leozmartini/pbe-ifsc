@@ -2,8 +2,10 @@ package ads.pbe.labpsqlspringboot.services;
 
 import ads.pbe.labpsqlspringboot.models.Message;
 import ads.pbe.labpsqlspringboot.repositories.MessageRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -14,19 +16,17 @@ public class MessageService {
         this.messageRepo = messageRepo;
     }
 
-    public String getAllUsers() {
-        List<Message> allMessages = this.messageRepo.findAll();
-        StringBuilder res = new StringBuilder();
-
-        allMessages.forEach((m)->{
-            res.append(m.getMessage() + "\n");
-        });
-
-        return res.toString();
+    @Transactional
+    public Message pollMessage(String inbox) {
+        Message message = this.messageRepo.findAndLockMessageByInbox(inbox);
+        if (message != null) {
+            this.messageRepo.deleteMessageById(message.getId());
+        }
+        return message;
     }
 
     public void newMessage(String inbox, String message) {
-        Message msg = new Message(inbox, message);
+        Message msg = new Message(inbox, message, new Date());
         this.messageRepo.save(msg);
     }
 }

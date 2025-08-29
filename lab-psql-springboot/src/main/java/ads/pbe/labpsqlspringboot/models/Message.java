@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.*;
 
+import java.util.Date;
+
 @Entity
 @Data
 @NoArgsConstructor(force = true)
@@ -17,4 +19,5 @@ public class Message {
 
     private final String inbox;
     private final String message;
+    private final Date creation_date;
 }
